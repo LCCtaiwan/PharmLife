@@ -56,8 +56,13 @@ export async function shareLifeCard(state: GameState) {
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
   if (!blob) return
   const file = new File([blob], `PharmLife-${state.profile.name}-${state.seed}.png`, { type: 'image/png' })
-  if (navigator.share && navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: `我的 PharmLife：${state.ending?.title}`, text: `世界種子 ${state.seed}` })
-  else {
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: `我的 PharmLife：${state.ending?.title}`, text: `世界種子 ${state.seed}` })
+    } catch (error) {
+      if (!(error instanceof DOMException) || error.name !== 'AbortError') throw error
+    }
+  } else {
     const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = file.name; link.click(); URL.revokeObjectURL(url)
   }
 }

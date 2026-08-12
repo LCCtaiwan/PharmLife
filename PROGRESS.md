@@ -2,7 +2,7 @@
 
 ## Current Status
 
-- Change: C-002
+- Change: C-003
 - Date: 2026-08-13
 - Scope: PharmLife v0.2 完整可玩版本
 - Verification: pass — 11 tests、正式建置、安全掃描與手機瀏覽器主流程
@@ -22,3 +22,4 @@
 - `PGY許願池/PharmLife` 原先不存在，本次為全新建立。
 - 共享 handover 無 PharmLife 紀錄；以參考對話與本次明確需求為準。
 - 100 個事件、8 大職涯、4 階職位、版本化 Seed、本機存檔與人生卡均已實作。
+- 系統分享被使用者取消時會安靜返回，不產生未處理錯誤。

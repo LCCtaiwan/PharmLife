@@ -4,6 +4,11 @@
 
 ## 0.2.0 — 2026-08-13
 
+### C-003 fix: handle canceled system sharing gracefully
+
+- 使用者關閉人生卡系統分享視窗時，不再產生未處理的 `AbortError`。
+- 驗證：`npm test` 與 `npm run build` 通過。
+
 ### C-002 feat: complete the playable PharmLife v0.2 deep edition
 
 - 完成手機優先 UI，包含首頁、建角、年度行動、事件演出、能力、關係、資產、存檔與人生結算。
