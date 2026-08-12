@@ -48,6 +48,13 @@
 - 關閉瀏覽器驗收時發現系統分享被取消會拋出 `AbortError`。
 - 將使用者取消視為正常操作；其他分享錯誤仍向上拋出。
 
+### 2026-08-13 — C-004
+
+- 建立公開 GitHub repository `LCCtaiwan/PharmLife`，推送 `main` 與 `v0.2.0`。
+- 啟用由 GitHub Actions 發布的 GitHub Pages。
+- 首次 workflow 在 Pages 尚未啟用時於 `configure-pages` 回傳 404；啟用站點後重跑即完整通過，遊戲程式與測試沒有失敗。
+- 使用真實公開網址以 390×844 驗收首頁與建角入口，瀏覽器 0 errors / 0 warnings。
+
 ## Accepted / Rejected Outputs
 
 - `pass`：桌面首頁視覺與資訊層級。
@@ -58,7 +65,7 @@
 
 ## Current Checkpoint
 
-v0.2 開發與驗收完成；下一階段是外部玩家測試與平衡調整。
+v0.2 已公開發布；下一階段是外部玩家測試與平衡調整。
 
 ## Recommended Next Step
 
@@ -73,3 +80,5 @@ v0.2 開發與驗收完成；下一階段是外部玩家測試與平衡調整。
 - 桌面首頁：pass，1280×720。
 - 手機流程：pass，390×844；建角、年度行動、事件、下一年、職涯、存檔、結局與分享卡。
 - 瀏覽器 console：pass，0 errors / 0 warnings。
+- GitHub Actions：pass，安裝、測試、build、Pages artifact 與 deploy 全部完成。
+- GitHub Pages 正式站：pass，`https://lcctaiwan.github.io/PharmLife/`。

@@ -1,5 +1,11 @@
 # Deployment
 
+## Current Production
+
+- Repository: <https://github.com/LCCtaiwan/PharmLife>
+- GitHub Pages: <https://lcctaiwan.github.io/PharmLife/>
+- Release tag: `v0.2.0`
+
 ## GitHub Pages
 
 1. 將 repository 的預設分支設為 `main`。

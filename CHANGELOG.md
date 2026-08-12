@@ -4,6 +4,12 @@
 
 ## 0.2.0 — 2026-08-13
 
+### C-004 docs: publish the public GitHub Pages release
+
+- 建立公開 repository `LCCtaiwan/PharmLife`，推送 `main` 與 `v0.2.0`。
+- 啟用 GitHub Pages，正式站為 `https://lcctaiwan.github.io/PharmLife/`。
+- 驗證：GitHub Actions 完整通過；390×844 正式站首頁與建角流程通過；瀏覽器 0 errors / 0 warnings。
+
 ### C-003 fix: handle canceled system sharing gracefully
 
 - 使用者關閉人生卡系統分享視窗時，不再產生未處理的 `AbortError`。

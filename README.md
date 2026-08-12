@@ -2,6 +2,10 @@
 
 手機優先的台灣藥師職涯人生模擬器。玩家從藥學系開始，經歷實習與國考，進入八大職涯，在能力、人格、關係、金錢、家庭與健康之間做取捨，最後產生可分享的人生結算卡。
 
+## 線上遊玩
+
+[開啟 PharmLife](https://lcctaiwan.github.io/PharmLife/)
+
 ## 遊戲特色
 
 - 可重現的版本化 Seed／RNG；相同版本、Seed 與選擇可重現同一人生。
@@ -45,3 +49,5 @@ npm run build
 ## 部署
 
 `npm run build` 會產生 `dist/`。`.github/workflows/deploy-pages.yml` 可部署到 GitHub Pages；`vercel.json` 與 `netlify.toml` 也提供單頁應用程式的靜態部署設定。
+
+目前正式站由 GitHub Pages 發布：<https://lcctaiwan.github.io/PharmLife/>
