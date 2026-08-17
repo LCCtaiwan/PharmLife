@@ -1,20 +1,21 @@
-# PharmLife v0.2 深度版
+# PharmLife Career Layer v0.4
 
-手機優先的台灣藥師職涯人生模擬器。玩家從藥學系開始，經歷實習與國考，進入八大職涯，在能力、人格、關係、金錢、家庭與健康之間做取捨，最後產生可分享的人生結算卡。
+手機優先的台灣藥師職涯人生模擬器。目前開發中的垂直切片讓玩家從 25 歲醫院藥師開始，每年在收入、專業、升遷與健康之間做選擇，直到 65 歲結算。
 
-## 線上遊玩
+目前唯一實作基準是 [Career Layer SPEC v0.4](docs/career-layer-v0.4.md)。舊 v0.2 程式與資料暫時保留供回退與比對，但不再是新入口的產品規格。
 
-[開啟 PharmLife](https://lcctaiwan.github.io/PharmLife/)
+## 公開舊版
 
-## 遊戲特色
+[PharmLife v0.2 技術 Alpha](https://lcctaiwan.github.io/PharmLife/) 尚未更新為 v0.4；本輪不部署公開站。
 
-- 可重現的版本化 Seed／RNG；相同版本、Seed 與選擇可重現同一人生。
-- 藥學系、兩階段國考與失敗後續內容。
-- 醫院、社區、連鎖、診所、藥廠、臨床試驗、公職、學術八大職涯。
-- 資料驅動事件、事件鏈、flags 與有自己人生進度的 NPC。
-- 100 個學生、職涯、關係、家庭、經濟、健康、創業與世界事件。
-- Burnout、資產負債、升遷、跳槽、創業、家庭、成就與多結局。
-- 本機存檔、JSON 匯出／匯入與可下載的人生結算卡。
+## 這次實作範圍
+
+- 版本化 Seed／RNG，相同 Seed 與選擇可重現同一人生。
+- 通用 Career Schema 與完整的後續系統狀態欄位。
+- Hospital 25→65 可玩年度循環。
+- 分層薪資、簡化升遷與簡化 Burnout。
+- 純 HTML 年度成績單與結局卡。
+- Debug URL、快轉、模擬與時間線輸出。
 
 ## 執行
 
@@ -36,6 +37,7 @@ npm run build
 
 ## 重要路徑
 
+- `src/career-layer/`：v0.4 Career Schema、資料、引擎、Debug 與 UI 所用 view model。
 - `src/engine/`：純函式遊戲引擎、Seed/RNG 與結算。
 - `src/data/`：職涯、NPC、事件、成就與結局資料。
 - `src/save/`：版本化本機存檔與匯出／匯入。
@@ -45,9 +47,11 @@ npm run build
 - `docs/authoring-events.md`：事件資料撰寫規則。
 - `docs/deployment.md`：GitHub Pages、Vercel 與 Netlify 部署。
 - `docs/develog.md`：決策與驗證紀錄。
+- `docs/career-layer-v0.4.md`：目前 Freeze 規格與驗收條件。
+- `TASKS.md`：本輪實作狀態與後續順序。
 
 ## 部署
 
 `npm run build` 會產生 `dist/`。`.github/workflows/deploy-pages.yml` 可部署到 GitHub Pages；`vercel.json` 與 `netlify.toml` 也提供單頁應用程式的靜態部署設定。
 
-目前正式站由 GitHub Pages 發布：<https://lcctaiwan.github.io/PharmLife/>
+目前正式站仍是 v0.2 技術 Alpha。本輪只完成本機 M0/M1，不更新部署。

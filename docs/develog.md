@@ -2,7 +2,7 @@
 
 ## Current Goal
 
-完成可從建立角色一路玩到人生結算的 PharmLife v0.2 深度版，包含八大職涯、人生系統、存檔分享與手機優先 UI。
+依已 Freeze 的 Career Layer v0.4 完成 M0 Foundation 與 Hospital 25→65 垂直切片；不擴充其他七條 Career，也不修改公開站。
 
 ## Stack And Run Commands
 
@@ -15,7 +15,7 @@
 ## Brainstorming Summary
 
 - 以「取捨」而非知識問答為遊戲核心。
-- 以年度 4 行動點維持單局 10–20 分鐘。
+- 原實作採年度 4 行動點與單局 10–20 分鐘；C-005 已判定需要重新確認，不再視為既定共識。
 - 失敗打開事件鏈，不設計純懲罰空回合。
 - 手機先行，桌面再漸進增強成三欄儀表板。
 
@@ -24,6 +24,39 @@
 完整設計見 `docs/SDD.md`。遊戲引擎採純函式、資料驅動事件與版本化 Seed；UI 僅 dispatch command。
 
 ## Completed Work
+
+### 2026-08-17 — C-007 UI Readability
+
+- 放大年度選項標題、描述、取捨文字、側欄狀態、薪資明細與年度成績單字級，移除大量 8–11px 小字。
+- 將米灰低對比儀表板改為深綠職涯 Hero、高對比白卡與更清楚的狀態數字層級。
+- 修正手機版隱藏 Seed 的問題；Seed 改放在職涯 Hero，所有尺寸都可直接查看。
+- 參考 YaKyoLife 的單欄開局節奏，新增 PharmLife 原生開局頁：固定 Hospital 25 歲、可輸入或更換 Seed，不加入 v0.4 以外的角色或天賦系統。
+- 以 390×844 實際檢查年度選擇與成績單；兩畫面資訊可讀，console 0 errors / 0 warnings。
+- `npm run build` 通過；遊戲邏輯與 Scope 未變更。
+
+### 2026-08-17 — C-006 Documentation Gate
+
+- 將 `docs/career-layer-v0.4.md` 設為本輪唯一實作基準，明訂 M0/M1、Hospital 數值、Debug contract 與驗收證據。
+- 建立 `TASKS.md`，把文件、基礎、垂直切片與驗證拆成可勾選工作。
+- 決定保留舊 v0.2 runtime，新 Career Layer 使用獨立目錄；驗收前不刪舊資料、不更新公開站。
+- 文件階段判定：`pass`；Freeze、Scope、資料與驗收條件已通過內容及格式檢查，runtime 編輯可開始。
+
+### 2026-08-17 — C-006 M0/M1 Implementation
+
+- 新增 `src/career-layer/`，包含 Career Schema、完整 GameState、版本化 Seeded RNG、Hospital data、schema validation、年度引擎與 Debug helpers。
+- Compensation 拆成本薪、夜班津貼、進階津貼、職務津貼、年薪月數與變動獎金；Hospital 使用 14.5 個月，夜班月津貼 0.9 萬。
+- 完成每年六抽三、選一結算、Performance、Signature、Stress、Burnout Risk、簡化 Promotion/Burnout 與 25→65 退休流程。
+- 本機入口改為純 HTML 語意結構的年度成績單與結局卡；舊 v0.2 runtime 檔案完整保留，公開站未更新。
+- 新增 7 個 Career Layer tests；連同既有測試共 18 tests 全部通過。
+- `npm run build` 通過；桌面 1280×820 完成選擇與成績單，Debug 快轉完成 40 年／65 歲結局；手機 390×844 版面通過，console 0 errors / 0 warnings。
+- M0/M1 階段判定：`pass`。
+
+### 2026-08-13 — C-005
+
+- 回讀原始參考對話，確認 YaKyoLife、《實況野球》、《活俠傳》與 PharmLife 的原定分工。
+- 對照實際 `game.ts`、`GameView.tsx` 與 `Portrait.tsx`，確認四行動點迴圈、職涯回饋與 CSS 幾何人物的偏差。
+- 建立 `docs/v0.2-revision-spec.md`，定義核心迴圈、年度績效、職涯紀錄、事件／NPC 定位、美術 Gate、版本策略與修正里程碑。
+- 文件驗收為 `revise`；等待使用者確認四項產品決策，尚未修改 runtime 或公開站。
 
 ### 2026-08-12 — C-001
 
@@ -57,19 +90,21 @@
 
 ## Accepted / Rejected Outputs
 
-- `pass`：桌面首頁視覺與資訊層級。
-- `pass`：390×844 手機首頁、行動、事件、職涯、存檔與結局畫面。
+- `pass（技術）`：桌面首頁資訊層級與響應式布局可正常顯示。
+- `pass（技術）`：390×844 手機首頁、行動、事件、職涯、存檔與結局流程無阻斷。
 - `pass`：人生卡產生流程，瀏覽器無錯誤。
 - `revise → pass`：手機原先先顯示人物卡，已改為年度決策／事件優先。
 - `revise → pass`：SPA 切頁保留舊捲動位置，已在畫面切換時回頂端。
+- `revise（產品）`：四行動點核心迴圈、職涯差異與年度回饋未對齊原始共識。
+- `reject（美術）`：現有 CSS 幾何玩家與 NPC 不得作為正式人物資產。
 
 ## Current Checkpoint
 
-v0.2 已公開發布；下一階段是外部玩家測試與平衡調整。
+Career Layer v0.4 M0/M1 已完成；本機入口為 Hospital 25→65 垂直切片，公開站仍為 v0.2 技術 Alpha。
 
 ## Recommended Next Step
 
-用 5–10 位玩家進行單局測試，觀察選項猶豫、失敗趣味與二周目意願。
+由使用者試玩 Hospital 垂直切片；通過產品手感後，再以資料檔擴充其餘七條 Career，且不得修改 engine。
 
 ## Verification Status
 

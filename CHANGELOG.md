@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+### C-007 fix: improve Career Layer UI readability
+
+- Increase mobile and desktop type sizes across choices, side panels, compensation details and annual reports.
+- Replace the low-contrast beige dashboard with a dark-green career hero, high-contrast cards and clearer visual hierarchy.
+- Keep the reproducible Seed visible in the career hero on both mobile and desktop.
+- Add a focused start screen with an editable Seed, one-click random Seed and a clear Hospital age-25 starting point.
+- Verification: production build passed; 390×844 choice and annual-report screens passed visual inspection with 0 console errors.
+
+### C-006 feat: establish Career Layer v0.4 M0/M1
+
+- Freeze `docs/career-layer-v0.4.md` as the implementation source of truth.
+- Preserve the v0.2 runtime while adding an isolated Career Layer and switching only the local entry after verification.
+- Scope is limited to shared foundation, Hospital age 25–65, annual reports, ending card and tests; public deployment is excluded.
+- Add a versioned reproducible RNG, debug URL/helpers, data validation, layered compensation and reserved later-system state.
+- Add the playable annual three-choice loop, simplified promotion/Burnout checks, semantic annual report and retirement ending.
+- Verification: 18 tests passed; production build passed; 1280×820 and 390×844 browser flows passed with 0 errors and 0 warnings.
+
+### C-005 docs: realign the v0.2 product specification
+
+- 對照先前討論與實際程式，整理原始共識、目前成品、偏差與必要修正。
+- 定義修正版年度迴圈、職涯紀錄、事件／NPC 定位、人物美術 Gate 與 R0–R5 驗收。
+- 將現有公開版定位為技術 Alpha；修正版規格通過前不修改正式站。
+- 驗證：文件內容與現有 `game.ts`、`GameView.tsx`、`Portrait.tsx`、SPEC、SDD 及交班 #160 交叉核對；產品決策狀態為 `revise`。
+
 ## 0.2.0 — 2026-08-13
 
 ### C-004 docs: publish the public GitHub Pages release
