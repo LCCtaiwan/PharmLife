@@ -5,7 +5,7 @@ export type Abilities = Record<AbilityKey, number>
 export type AbilityWeights = Record<AbilityKey, number>
 export type Difficulty = 1 | 2 | 3 | 4 | 5
 export type EmploymentStatus = 'employed' | 'gap' | 'entry_preparation' | 'retired'
-export type AnnualStage = 'choice' | 'report' | 'ending'
+export type AnnualStage = 'choice' | 'event' | 'outcome' | 'report' | 'ending'
 export type ShiftType = 'day' | 'evening' | 'night'
 
 export interface CareerEntry {
@@ -248,6 +248,13 @@ export interface AnnualReport {
   title: string
   choiceId: string
   choiceLabel: string
+  goalId?: string
+  goalLabel?: string
+  goalCompleted?: boolean
+  eventId?: string
+  eventTitle?: string
+  eventChoiceLabel?: string
+  eventOutcome?: string
   performance: number
   compensation: CompensationSnapshot
   moneyBefore: number
@@ -266,21 +273,112 @@ export interface AnnualReport {
   notes: string[]
 }
 
+export interface AnnualGoal {
+  id: string
+  label: string
+  description: string
+  preferredChoiceIds: string[]
+  target: number
+  successText: string
+  failureText: string
+  reward?: GameEffects
+}
+
+export interface ColleagueDefinition {
+  id: string
+  name: string
+  role: string
+  description: string
+}
+
+export interface ColleagueState {
+  trust: number
+  respect: number
+  strain: number
+  flags: string[]
+}
+
+export type SeedFate = 'clinical_eye' | 'staffing_storm' | 'mentor_bond' | 'political_headwind' | 'quiet_years'
+
+export interface EventCondition {
+  minRunYear?: number
+  maxRunYear?: number
+  requiredFlags?: string[]
+  excludedFlags?: string[]
+  planChoiceIds?: string[]
+  seedFates?: SeedFate[]
+  colleague?: { id: string; minTrust?: number; maxStrain?: number }
+}
+
+export interface ColleagueEffect {
+  trust?: number
+  respect?: number
+  strain?: number
+  flags?: string[]
+}
+
+export interface EventEffects extends GameEffects {
+  goalProgress?: number
+  performance?: number
+  colleagues?: Record<string, ColleagueEffect>
+  chainAdvance?: number
+}
+
+export interface EventChoice {
+  id: string
+  label: string
+  hint: string
+  outcome: string
+  effects: EventEffects
+  setsFlags?: string[]
+}
+
+export interface WorkplaceEvent {
+  id: string
+  chainId: string
+  chapter: number
+  title: string
+  scene: string
+  speakerId?: string
+  conditions?: EventCondition[]
+  weight: number
+  fateWeight?: Partial<Record<SeedFate, number>>
+  choices: EventChoice[]
+  repeatable?: boolean
+}
+
+export interface YearDraft {
+  planChoiceId: string
+  goalProgress: number
+  eventChoiceId?: string
+  eventOutcome?: string
+  effects: EventEffects
+  relationshipNotes: string[]
+}
+
+export interface TenYearEnding {
+  id: 'clinical_guardian' | 'young_manager' | 'trusted_senior' | 'well_paid_exhausted' | 'life_with_boundaries' | 'stalled_and_searching'
+  title: string
+  description: string
+  reasons: string[]
+}
+
 export interface TimelineEntry {
   age: number
   year: number
-  type: 'choice' | 'promotion' | 'burnout' | 'retirement'
+  type: 'choice' | 'event' | 'promotion' | 'burnout' | 'retirement'
   title: string
   detail: string
 }
 
 export interface GameState {
-  schemaVersion: 'career-layer-v0.4'
+  schemaVersion: 'career-layer-v0.5'
   rngVersion: string
   seed: string
   rngCursor: number
   age: number
   year: number
+  runYear: number
   stage: AnnualStage
   employmentStatus: EmploymentStatus
   careerId: string
@@ -309,6 +407,21 @@ export interface GameState {
   milestones: MilestoneProgress[]
   activeModifiers: TimedModifier[]
   flags: string[]
+  seedFate: SeedFate
+  fateRevealed: boolean
+  fateRevealedThisYear: boolean
+  colleagues: Record<string, ColleagueState>
+  currentGoalId: string
+  goalProgress: number
+  goalOutcome?: 'success' | 'failure'
+  yearPlanChoiceId?: string
+  yearDraft?: YearDraft
+  pendingEventId?: string
+  pendingOutcomeTitle?: string
+  pendingOutcomeText?: string
+  eventHistory: string[]
+  eventChoiceHistory: string[]
+  chainProgress: Record<string, number>
   availableChoiceIds: string[]
   lastReport?: AnnualReport
   reports: AnnualReport[]

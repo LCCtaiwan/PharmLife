@@ -1,5 +1,30 @@
 # Tasks
 
+## C-008 — Hospital v0.5 ten-year fun slice
+
+### Documentation Gate
+
+- [x] Freeze the ten-year product test and explicit exclusions.
+- [x] Define annual goals, recurring colleagues, event chains and hidden Seed fate.
+- [x] Define choice-information rules, endings and verification evidence.
+
+### Core rebuild
+
+- [x] Add annual-goal and colleague-memory state.
+- [x] Add generic workplace-event schema and condition selection.
+- [x] Add hidden Seed fate and fate modifiers.
+- [x] Split work direction from event response and report resolution.
+- [x] Add at least three multi-step event chains.
+- [x] End the run after ten reports at age 35.
+
+### UI and verification
+
+- [x] Render goal, event, outcome, report and ending screens.
+- [x] Add at least five reachable endings.
+- [x] Add deterministic story and event-chain tests.
+- [x] Run all tests and production build.
+- [x] Complete a 390×844 browser playthrough.
+
 ## C-006 — Career Layer v0.4 M0/M1
 
 ### Documentation Gate

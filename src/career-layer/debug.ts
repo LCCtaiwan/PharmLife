@@ -1,5 +1,6 @@
 import { continueAfterReport, createCareerGame, playCareerYear } from './engine'
 import { HOSPITAL_CAREER } from './hospital'
+import { HOSPITAL_EVENTS, HOSPITAL_GOALS } from './hospital-story'
 import { careerRandomAt } from './rng'
 import { ABILITY_KEYS, type Career, type GameState, type NewCareerGameOptions, type SimulationConfig, type SimulationResult } from './types'
 
@@ -48,12 +49,13 @@ export function fastForward(initial: GameState, years: number, strategy: NonNull
   let state = initial
   let remaining = Math.max(0, Math.floor(years))
   while (remaining > 0 && state.stage !== 'ending') {
-    if (state.stage === 'report') state = continueAfterReport(state, career)
+    if (state.stage === 'report') state = continueAfterReport(state, career, HOSPITAL_GOALS)
     if (state.stage === 'choice') {
-      state = playCareerYear(state, choose(state, career, strategy), career)
+      state = playCareerYear(state, choose(state, career, strategy), career, HOSPITAL_GOALS, HOSPITAL_EVENTS)
       remaining -= 1
     }
   }
+  if (state.stage === 'report' && state.runYear > 10) state = continueAfterReport(state, career, HOSPITAL_GOALS)
   return state
 }
 
@@ -65,8 +67,8 @@ export function simulate(config: SimulationConfig = {}, career: Career = HOSPITA
   let burnoutRuns = 0
   const endings: Record<number, number> = {}
   for (let index = 0; index < runs; index += 1) {
-    const initial = createCareerGame(career, { seed: `${config.seed ?? 'SIM04'}-${index}` })
-    const ending = fastForward(initial, 40, config.strategy ?? 'balanced', career)
+    const initial = createCareerGame(career, { seed: `${config.seed ?? 'SIM05'}-${index}` }, HOSPITAL_GOALS)
+    const ending = fastForward(initial, 10, config.strategy ?? 'balanced', career)
     assets += ending.money - ending.debt
     levels += ending.promotion.highestLevel
     if (ending.burnout.episodes > 0) burnoutRuns += 1

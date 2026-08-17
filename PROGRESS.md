@@ -2,20 +2,21 @@
 
 ## Current Status
 
-- Change: C-007
+- Change: C-008
 - Date: 2026-08-17
-- Scope: Career Layer v0.4 UI readability and visual hierarchy
-- Verification: pass — production build、390×844 choice/report visual review、0 console errors
+- Scope: Hospital v0.5 ten-year fun vertical slice
+- Verification: pass — 21 tests, production build and 390×844 ten-year browser flow
 
-## In Progress
+## Completed
 
-- 無；C-007 UI 可讀性調整已完成，等待使用者視覺驗收，公開站維持 v0.2。
+- Hospital v0.5 已完成 25→35 十年垂直切片：年度目標、工作方向、職場事件、事件回應、年度成績單與多結局。
+- 陳主任、林學姊、許新人會累積信任與關係記憶；四條多步事件鏈會根據旗標與選擇繼續。
+- Seed 現在決定五種隱藏命運偏向，只在相關事件發生時揭露。
 
 ## Next
 
-1. 由使用者實際試玩 Hospital 垂直切片並回報節奏與數值感受。
-2. 通過產品驗收後，以相同 Schema 新增其餘七條 Career data。
-3. 新增 Dummy ninth-career test，確認不得修改 engine。
+1. 請使用者實際玩不同 Seed 與路線，回饋十年節奏、事件吸引力與結局辨識度。
+2. Hospital 通過玩法驗收後，才考慮發布或擴展其他 Career。
 
 ## Notes
 
@@ -28,5 +29,7 @@
 - 現有公開版保留為技術 Alpha；修正版未通過前不更新正式站。
 - v0.4 已由使用者 Freeze；C-006 僅做 M0/M1，不加入其他七條 Career 或完整 Transition/Burnout 系統。
 - 舊 v0.2 runtime 暫時保留；新程式放在 `src/career-layer/`，通過驗收前不刪除舊資料。
-- 本機入口已切至 v0.4 Hospital；舊引擎、資料、存檔與 UI 檔仍保留，未刪除。
+- 本機入口已切至 v0.5 Hospital 十年版；舊引擎、資料、存檔與 UI 檔仍保留，未刪除。
 - Debug helpers 位於 `window.pharmLifeDebug`，支援 `fastForward`、`simulate`、`dumpTimeline` 與 `getState`。
+- 使用者已判定 v0.4「技術能跑但無趣」；C-008 暫停擴七 Career，先證明 Hospital 十年值得重玩。
+- v0.5 本機版已通過技術驗收，尚未 push 或更新 GitHub Pages。

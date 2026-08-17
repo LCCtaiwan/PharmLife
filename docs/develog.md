@@ -2,7 +2,7 @@
 
 ## Current Goal
 
-依已 Freeze 的 Career Layer v0.4 完成 M0 Foundation 與 Hospital 25→65 垂直切片；不擴充其他七條 Career，也不修改公開站。
+依 Hospital v0.5 完成 25→35 十年故事型垂直切片；先讓 Hospital 值得重玩，再考慮其他七條 Career。
 
 ## Stack And Run Commands
 
@@ -24,6 +24,25 @@
 完整設計見 `docs/SDD.md`。遊戲引擎採純函式、資料驅動事件與版本化 Seed；UI 僅 dispatch command。
 
 ## Completed Work
+
+### 2026-08-17 — C-008 Documentation Gate
+
+- 接受使用者「好無趣」的產品判定；v0.4 技術驗收仍成立，但不視為玩法驗收通過。
+- 建立 `docs/hospital-vertical-slice-v0.5.md`，將產品測試改為 25→35 十年內完成一局並想立即重玩。
+- 鎖定年度目標、固定同事、事件鏈、隱藏 Seed fate、資訊隱藏規則與至少五種十年結局。
+- 明確排除其他 Career、完整轉職、學生／家庭與公開部署，避免再用內容量掩蓋核心無趣。
+- 文件階段判定：`pass`；十年產品測試、事件資料契約、角色記憶、Seed fate、結局與排除範圍均已通過內容及格式檢查。
+
+### 2026-08-17 — C-008 Hospital Ten-Year Implementation
+
+- 將年度迴圈重做為「年度目標 → 工作方向 → 職場事件 → 兩難回應 → 結果 → 成績單」，並在第十張成績單後於 35 歲結算。
+- 新增陳主任、林學姊、許新人的信任／尊重／緊張狀態，以及用藥安全、缺藥、帶新人、臨床專案四條多步事件鏈。
+- 每個 Seed 有一個隱藏 fate；它調整事件權重與初始關係，並只在第一次相關事件時揭露。
+- 十年結局依升遷、Burnout、健康、專業價值、生活界線與關係記憶決定，共六種。
+- `npm test -- --run`：5 files、21 tests 全數通過；`npm run build`：TypeScript 與 Vite production build 通過。
+- 390×844 實際檢查開局、年度目標、事件、結果、成績單與 Debug 十年快轉結局；console 0 errors / 0 warnings。
+- 1,000 局平衡探測顯示策略取向會產生明顯代價：200 個 Seed 中，work-life 路線 Burnout 6%，money-max 89.5%；後者平均資產較高。
+- 實作階段判定：`pass（技術）`；是否「真正有趣」留給使用者試玩驗收，本輪不發布。
 
 ### 2026-08-17 — C-007 UI Readability
 

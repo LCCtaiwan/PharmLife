@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { dumpTimeline, fastForward, parseDebugSearch, simulate } from './career-layer/debug'
-import { abilityGrade, choiceById, continueAfterReport, createCareerGame, currentLevel, playCareerYear } from './career-layer/engine'
+import { abilityGrade, choiceById, chooseCareerDirection, continueAfterReport, createCareerGame, currentLevel, finalizeCareerYear, resolveWorkplaceEvent, workplaceEventById } from './career-layer/engine'
 import { HOSPITAL_CAREER } from './career-layer/hospital'
+import { HOSPITAL_COLLEAGUES, HOSPITAL_EVENTS, HOSPITAL_GOALS, SEED_FATE_LABELS, selectTenYearEnding } from './career-layer/hospital-story'
 import { generateCareerSeed, normalizeCareerSeed } from './career-layer/rng'
 import type { AbilityKey, AnnualReport, GameState, SimulationConfig } from './career-layer/types'
 import './career-layer/app.css'
@@ -23,7 +24,7 @@ const ABILITY_LABELS: Record<AbilityKey, string> = {
 
 function initialBoot() {
   const debug = parseDebugSearch(window.location.search)
-  const game = createCareerGame(HOSPITAL_CAREER, { ...debug, seed: debug.seed ?? generateCareerSeed() })
+  const game = createCareerGame(HOSPITAL_CAREER, { ...debug, seed: debug.seed ?? generateCareerSeed() }, HOSPITAL_GOALS)
   return { game, started: Boolean(debug.debug) }
 }
 
@@ -50,13 +51,13 @@ export default function App() {
   const start = () => {
     const seed = normalizeCareerSeed(seedDraft)
     setSeedDraft(seed)
-    setGame(createCareerGame(HOSPITAL_CAREER, { seed }))
+    setGame(createCareerGame(HOSPITAL_CAREER, { seed }, HOSPITAL_GOALS))
     setStarted(true)
     window.scrollTo(0, 0)
   }
   const reset = () => {
     if (game.debug) {
-      setGame(createCareerGame(HOSPITAL_CAREER, parseDebugSearch(window.location.search)))
+      setGame(createCareerGame(HOSPITAL_CAREER, parseDebugSearch(window.location.search), HOSPITAL_GOALS))
       return
     }
     setSeedDraft(game.seed)
@@ -64,6 +65,9 @@ export default function App() {
     window.scrollTo(0, 0)
   }
   const role = currentLevel(game, HOSPITAL_CAREER)
+  const displayAge = game.stage === 'report' && game.lastReport ? game.lastReport.age : game.age
+  const displayYear = game.stage === 'report' && game.lastReport ? game.lastReport.year : game.year
+  const displayRunYear = game.stage === 'report' && game.lastReport ? game.lastReport.age - 24 : Math.min(game.runYear, 10)
 
   if (!started) return <StartScreen
     seed={seedDraft}
@@ -76,7 +80,7 @@ export default function App() {
     <header className="cl-header">
       <div className="cl-brand">
         <span>Rx</span>
-        <div><strong>PharmLife</strong><small>CAREER LAYER v0.4</small></div>
+        <div><strong>PharmLife</strong><small>HOSPITAL STORY v0.5</small></div>
       </div>
       <div className="cl-meta">
         {game.debug && <b>DEBUG</b>}
@@ -87,7 +91,7 @@ export default function App() {
     <section className="cl-hero">
       <div>
         <div className="cl-hero-kicker">
-          <p className="cl-eyebrow">{game.year} · {game.age} 歲</p>
+          <p className="cl-eyebrow">第 {displayRunYear} 年 · {displayYear} · {displayAge} 歲</p>
           <code>SEED · {game.seed}</code>
         </div>
         <h1>{role.title}</h1>
@@ -117,16 +121,26 @@ export default function App() {
           <div><dt>處方攔截</dt><dd>{Math.round(game.signatureValue)} 件</dd></div>
           <div><dt>Burnout Risk</dt><dd>{Math.round(game.burnout.risk)}</dd></div>
         </dl>
+        {game.fateRevealed && !game.fateRevealedThisYear && <div className="cl-fate"><small>SEED 命運已揭露</small><strong>{SEED_FATE_LABELS[game.seedFate].label}</strong><p>{SEED_FATE_LABELS[game.seedFate].reveal}</p></div>}
       </aside>
 
       <section className="cl-panel cl-stage" aria-live="polite">
-        {game.stage === 'choice' && <ChoiceStage game={game} onChoose={(id) => setGame((state) => playCareerYear(state, id, HOSPITAL_CAREER))} />}
-        {game.stage === 'report' && game.lastReport && <ReportCard report={game.lastReport} onContinue={() => setGame((state) => continueAfterReport(state, HOSPITAL_CAREER))} />}
+        {game.stage === 'choice' && <ChoiceStage game={game} onChoose={(id) => setGame((state) => chooseCareerDirection(state, id, HOSPITAL_CAREER, HOSPITAL_GOALS, HOSPITAL_EVENTS))} />}
+        {game.stage === 'event' && <EventStage game={game} onChoose={(id) => setGame((state) => resolveWorkplaceEvent(state, id, HOSPITAL_EVENTS))} />}
+        {game.stage === 'outcome' && <OutcomeStage game={game} onContinue={() => setGame((state) => finalizeCareerYear(state, HOSPITAL_CAREER, HOSPITAL_GOALS, HOSPITAL_EVENTS))} />}
+        {game.stage === 'report' && game.lastReport && <ReportCard report={game.lastReport} onContinue={() => setGame((state) => continueAfterReport(state, HOSPITAL_CAREER, HOSPITAL_GOALS))} />}
         {game.stage === 'ending' && <EndingCard game={game} onRestart={reset} />}
       </section>
 
       <aside className="cl-panel cl-sidebar">
-        <h2>今年位置</h2>
+        <h2>職場關係</h2>
+        <div className="cl-relationships">
+          {HOSPITAL_COLLEAGUES.map((person) => <article key={person.id}>
+            <div><strong>{person.name}</strong><small>{person.role}</small></div>
+            <span>信任 {game.colleagues[person.id]?.trust ?? 0}</span>
+          </article>)}
+        </div>
+        <h2 className="cl-sidebar-subtitle">今年位置</h2>
         <dl className="cl-mini-stats">
           <div><dt>月本薪</dt><dd>{role.salaryBase.toFixed(1)} 萬</dd></div>
           <div><dt>年薪月數</dt><dd>14.5 個月</dd></div>
@@ -150,9 +164,9 @@ function StartScreen({ seed, onSeedChange, onRandomize, onStart }: { seed: strin
     <div className="cl-start-glow" />
     <section className="cl-start-card">
       <div className="cl-start-brand"><span>Rx</span><strong>PharmLife</strong></div>
-      <p className="cl-start-version">CAREER LAYER · v0.4</p>
+      <p className="cl-start-version">HOSPITAL STORY · v0.5</p>
       <h1>藥師人生<br />沒有標準處方。</h1>
-      <p className="cl-start-lead">從 25 歲醫院藥師開始。每一年都在專業、收入、升遷與健康之間做選擇，一路走到 65 歲。</p>
+      <p className="cl-start-lead">從 25 歲醫院藥師開始。十年裡，你會遇見記得選擇的人、無法預測的職場事件，以及不只寫在薪資上的代價。</p>
 
       <div className="cl-start-career">
         <div><small>起始職涯</small><strong>醫院藥師</strong></div>
@@ -176,10 +190,12 @@ function Metric({ label, value, suffix, tone }: { label: string; value: string |
 }
 
 function ChoiceStage({ game, onChoose }: { game: GameState; onChoose: (id: string) => void }) {
+  const goal = HOSPITAL_GOALS.find((item) => item.id === game.currentGoalId)
   return <div className="cl-choice-stage">
-    <p className="cl-eyebrow">年初 · 方向選擇</p>
+    <p className="cl-eyebrow">第 {game.runYear} 年 · 年度目標</p>
+    <div className="cl-goal-card"><small>今年要守住的事</small><strong>{goal?.label}</strong><p>{goal?.description}</p></div>
     <h2>今年，你要拿什麼換什麼？</h2>
-    <p className="cl-intro">系統從六個醫院方向抽出三個。選擇後會直接結算這一年。</p>
+    <p className="cl-intro">先選工作方向。真正的職場事件，會在計畫之外發生。</p>
     <div className="cl-choice-list">
       {game.availableChoiceIds.map((id, index) => {
         const choice = choiceById(HOSPITAL_CAREER, id)!
@@ -191,6 +207,37 @@ function ChoiceStage({ game, onChoose }: { game: GameState; onChoose: (id: strin
       })}
     </div>
   </div>
+}
+
+function EventStage({ game, onChoose }: { game: GameState; onChoose: (id: string) => void }) {
+  const event = workplaceEventById(HOSPITAL_EVENTS, game.pendingEventId)
+  if (!event) return null
+  const speaker = HOSPITAL_COLLEAGUES.find((person) => person.id === event.speakerId)
+  return <article className="cl-event-stage">
+    <p className="cl-eyebrow">年中 · 職場事件</p>
+    {speaker && <div className="cl-speaker"><span>{speaker.name.slice(0, 1)}</span><div><strong>{speaker.name}</strong><small>{speaker.role}</small></div></div>}
+    <h2>{event.title}</h2>
+    <p className="cl-event-scene">{event.scene}</p>
+    <div className="cl-event-choices">
+      {event.choices.map((choice) => <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}><strong>{choice.label}</strong><small>{choice.hint}</small><b>→</b></button>)}
+    </div>
+  </article>
+}
+
+function OutcomeStage({ game, onContinue }: { game: GameState; onContinue: () => void }) {
+  return <article className="cl-outcome-stage">
+    <p className="cl-eyebrow">選擇的結果</p>
+    <div className="cl-outcome-mark">Rx</div>
+    <h2>{game.pendingOutcomeTitle}</h2>
+    <p>{game.pendingOutcomeText}</p>
+    {game.yearDraft?.relationshipNotes.length ? <div className="cl-memory-note"><small>有人會記得這件事</small>{game.yearDraft.relationshipNotes.map((note) => <span key={note}>{colleagueNote(note)}</span>)}</div> : null}
+    {game.fateRevealedThisYear && <div className="cl-fate-reveal"><small>這個 Seed 的命運開始浮現</small><strong>{SEED_FATE_LABELS[game.seedFate].label}</strong><p>{SEED_FATE_LABELS[game.seedFate].reveal}</p></div>}
+    <button className="cl-primary" type="button" onClick={onContinue}>查看年度成績單 <span>→</span></button>
+  </article>
+}
+
+function colleagueNote(note: string): string {
+  return HOSPITAL_COLLEAGUES.reduce((text, person) => text.replace(person.id, person.name), note)
 }
 
 function ReportCard({ report, onContinue }: { report: AnnualReport; onContinue: () => void }) {
@@ -222,9 +269,14 @@ function ReportCard({ report, onContinue }: { report: AnnualReport; onContinue: 
         </dl>
       </section>
     </div>
+    <section className={report.goalCompleted ? 'cl-goal-result success' : 'cl-goal-result failure'}>
+      <small>年度目標 · {report.goalLabel}</small><strong>{report.goalCompleted ? '達成' : '未達成'}</strong>
+    </section>
     <section className="cl-year-story">
       <strong>今年：{report.choiceLabel}</strong>
-      <p>{report.notes.join(' ')}</p>
+      <p className="cl-report-event">事件：{report.eventTitle} · {report.eventChoiceLabel}</p>
+      <p>{report.eventOutcome}</p>
+      <p>{report.notes.map(colleagueNote).join(' ')}</p>
       <blockquote>{report.promotionMessage}</blockquote>
     </section>
     <button className="cl-primary" type="button" onClick={onContinue}>進入下一年 <span>→</span></button>
@@ -232,12 +284,12 @@ function ReportCard({ report, onContinue }: { report: AnnualReport; onContinue: 
 }
 
 function EndingCard({ game, onRestart }: { game: GameState; onRestart: () => void }) {
-  const title = game.level >= 5 ? '白袍盡頭的掌舵者' : game.health < 55 ? '把太多自己留在醫院' : game.money >= 3000 ? '穩穩走完的專業人生' : '四十年的白袍日常'
+  const ending = selectTenYearEnding(game)
   const promotions = game.timeline.filter((entry) => entry.type === 'promotion').length
   return <article className="cl-ending">
-    <p className="cl-eyebrow">65 歲 · CAREER ENDING</p>
-    <h2>{title}</h2>
-    <p>你從 25 歲穿上醫院白袍，走過 {game.reports.length} 個年度。薪水、位置與專業都留下了痕跡，健康也記得每一次交換。</p>
+    <p className="cl-eyebrow">35 歲 · TEN-YEAR ENDING</p>
+    <h2>{ending.title}</h2>
+    <p>{ending.description}</p>
     <div className="cl-ending-stats">
       <Metric label="最高職級" value={`Lv.${game.promotion.highestLevel}`} />
       <Metric label="退休資產" value={Math.round(game.money - game.debt)} suffix="萬" />
@@ -246,7 +298,8 @@ function EndingCard({ game, onRestart }: { game: GameState; onRestart: () => voi
       <Metric label="健康" value={Math.round(game.health)} suffix="/100" />
       <Metric label="處方攔截" value={Math.round(game.signatureValue)} suffix="件" />
     </div>
-    <blockquote>「我要用什麼代價，換什麼人生？」你的四十年，就是答案。</blockquote>
-    <button className="cl-primary" type="button" onClick={onRestart}>用同一個 Seed 再走一次</button>
+    <div className="cl-ending-reasons">{ending.reasons.map((reason) => <span key={reason}>{reason}</span>)}</div>
+    <blockquote>「我要用什麼代價，換什麼人生？」這十年先給了一個答案。</blockquote>
+    <button className="cl-primary" type="button" onClick={onRestart}>換一個選擇，再走十年</button>
   </article>
 }

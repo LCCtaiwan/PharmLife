@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### C-008 feat: rebuild Hospital as a ten-year story slice
+
+- Freeze v0.5 around a 25→35 product test instead of a repetitive 40-year technical loop.
+- Define annual goals, recurring colleagues, condition-driven event chains, hidden Seed fates and multi-cause endings.
+- Keep other careers, transitions and public deployment out of scope until the Hospital slice is fun.
+- Rebuild each year as direction → workplace event → dilemma → outcome → report, with four multi-step event chains and colleague memory.
+- Add six ten-year endings driven by career level, burnout, health, clinical impact, boundaries and colleague trust.
+- Verification: 21 tests passed; production build passed; 390×844 start, event, outcome, report and age-35 ending passed with 0 console errors.
+
 ### C-007 fix: improve Career Layer UI readability
 
 - Increase mobile and desktop type sizes across choices, side panels, compensation details and annual reports.
