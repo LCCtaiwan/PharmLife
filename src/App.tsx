@@ -201,7 +201,7 @@ function ChoiceStage({ game, onChoose }: { game: GameState; onChoose: (id: strin
         const choice = choiceById(HOSPITAL_CAREER, id)!
         return <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}>
           <i>{String(index + 1).padStart(2, '0')}</i>
-          <span><strong>{choice.label}</strong><small>{choice.description}</small><em>{choice.tradeoff}</em></span>
+          <span><strong>{choice.label}</strong></span>
           <b>→</b>
         </button>
       })}
@@ -219,7 +219,7 @@ function EventStage({ game, onChoose }: { game: GameState; onChoose: (id: string
     <h2>{event.title}</h2>
     <p className="cl-event-scene">{event.scene}</p>
     <div className="cl-event-choices">
-      {event.choices.map((choice) => <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}><strong>{choice.label}</strong><small>{choice.hint}</small><b>→</b></button>)}
+      {event.choices.map((choice) => <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}><strong>{choice.label}</strong><b>→</b></button>)}
     </div>
   </article>
 }

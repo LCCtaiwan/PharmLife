@@ -134,10 +134,9 @@ The fate must not determine a single optimal strategy.
 Before choosing, show:
 
 - narrative intent;
-- likely direction such as「專業上升」「壓力風險」「可能影響林學姊」;
-- known compensation changes such as night-shift allowance.
+- enough context to understand what the player is doing.
 
-Do not show exact performance, relationship or event probability changes before resolution.
+Do not place predicted consequences, stat directions or relationship effects under an option. Known facts may stay in the surrounding scene, but the option itself only states the action.
 
 After resolution, the report shows concrete results and why they happened.
 
@@ -159,7 +158,7 @@ interface WorkplaceEvent {
 interface EventChoice {
   id: string;
   label: string;
-  hint: string;
+  hint: string; // Authoring/debug metadata; never rendered below the option.
   outcome: string;
   effects: EventEffects;
   setsFlags?: string[];

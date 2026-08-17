@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### C-009 fix: hide consequences below choices
+
+- Remove predicted trade-offs and outcome hints from annual-direction and workplace-event buttons.
+- Keep consequences for the outcome and annual-report screens so decisions retain uncertainty.
+
 ### C-008 feat: rebuild Hospital as a ten-year story slice
 
 - Freeze v0.5 around a 25→35 product test instead of a repetitive 40-year technical loop.

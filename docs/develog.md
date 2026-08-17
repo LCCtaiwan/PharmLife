@@ -136,3 +136,10 @@ Career Layer v0.4 M0/M1 已完成；本機入口為 Hospital 25→65 垂直切�
 - 瀏覽器 console：pass，0 errors / 0 warnings。
 - GitHub Actions：pass，安裝、測試、build、Pages artifact 與 deploy 全部完成。
 - GitHub Pages 正式站：pass，`https://lcctaiwan.github.io/PharmLife/`。
+
+### 2026-08-17 — C-009 Hidden Choice Consequences
+
+- 實際遊玩 YaKyoLife `aebtp2pi` Seed：開局先分配五顆訓練骰，事件選項會顯示成功率與成敗數值，選擇後立即追加結果並進入下一事件。
+- PharmLife 依使用者決定採取不同資訊策略：年度方向與職場事件按鈕只顯示行動名稱，不顯示描述、成功率、數值方向或預測後果。
+- 選擇卡高度隨資訊減少，手機版保留大型觸控區，後果仍在結果與年度成績單揭露。
+- 390×844 實際檢查年度方向與「許新人的第一個錯」事件選項；兩階段均無後果副文字，console 0 errors / 0 warnings。
