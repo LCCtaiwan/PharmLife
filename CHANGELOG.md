@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+### C-011 feat: implement Hospital v0.6 newcomer career loop
+
+- Add an isolated v0.6 Hospital state and deterministic engine while preserving the v0.5 runtime as historical regression coverage.
+- Replace annual directions with hospital assignments, two representative work episodes, optional life events, development preferences and explicit hospital decisions.
+- Separate six core competencies, per-assignment experience, supervised／independent clearance and current condition.
+- Add outpatient, inpatient, emergency-night and drug-supply work content for age 25–29.
+- Add persistent workplace relationship axes and an opt-out romance path that does not penalize single play.
+- Replace the age-35 ending UI with a five-year newcomer chapter review that explicitly preserves the future age-65 career.
+- Verification: 31 tests passed; production build passed; 390×844 five-year browser playthrough reached age 30 with 0 console errors／warnings.
+
+### C-010 docs: redefine Hospital work, development and full career span
+
+- Replace optional duty actions with hospital assignments, representative work episodes and player-submitted development preferences.
+- Separate transferable competencies, assignment proficiency, qualifications and current condition.
+- Restore the complete Hospital career to age 25→65; age 35 is now a chapter review rather than an ending.
+- Add persistent workplace relationships and an optional romance line with separate career and relationship outcomes.
+- Keep parenting, housing and full household-finance simulation out of scope.
+- Keep the other seven careers out of scope and mark v0.6 as review-only before runtime changes.
+
 ### C-009 fix: hide consequences below choices
 
 - Remove predicted trade-offs and outcome hints from annual-direction and workplace-event buttons.

@@ -1,6 +1,31 @@
 # Tasks
 
-## C-008 — Hospital v0.5 ten-year fun slice
+## C-010 — Hospital Career v0.6
+
+### Documentation Gate
+
+- [x] Restore Hospital to a complete age 25→65 career.
+- [x] Make age 35 a chapter review rather than a career ending.
+- [x] Replace optional duty actions with hospital assignments and representative work episodes.
+- [x] Separate core competencies, assignment proficiency, qualifications and current condition.
+- [x] Define development preferences, hospital approval and failure-forward rules.
+- [x] Define persistent workplace relationships and NPC career movement.
+- [x] Include an optional romance line without requiring marriage or penalizing single life.
+- [x] Keep parenting, housing and full household-finance simulation out of scope.
+- [x] Keep all other careers out of scope.
+- [x] Receive user acceptance and Freeze v0.6.
+
+### Runtime rebuild
+
+- [x] Replace annual direction with assignment, episode and preference phases.
+- [x] Implement the new growth and qualification state.
+- [x] Implement workplace-relationship and opt-in romance state.
+- [x] Rebuild and validate age 25–29 newcomer／PGY play.
+- [ ] Extend the accepted loop to the age-35 chapter review.
+- [ ] Extend the same Hospital system to age 65.
+- [x] Run deterministic tests, production build and 25–29 mobile browser playthrough.
+
+## C-008 — Hospital v0.5 ten-year fun slice（historical）
 
 ### Documentation Gate
 

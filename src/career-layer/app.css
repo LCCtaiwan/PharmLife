@@ -201,3 +201,58 @@ button { font: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+
+/* Hospital Career v0.6 */
+.cl-relationship-setting { margin: 18px 0 0; padding: 0; border: 0; }
+.cl-relationship-setting legend { margin-bottom: 9px; color: #b8cdc7; font-size: 13px; font-weight: 800; }
+.cl-relationship-setting > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cl-relationship-setting button { min-height: 48px; border: 1px solid rgba(125,224,191,.25); border-radius: 12px; color: #b8cdc7; background: rgba(255,255,255,.04); cursor: pointer; font-weight: 800; }
+.cl-relationship-setting button.active { border-color: #7de0bf; color: #08251f; background: #7de0bf; }
+.cl-relationship-setting small { display: block; margin-top: 8px; color: #8eaaa2; font-size: 12px; }
+.cl-hero--v06 h1 { max-width: 720px; }
+.cl-core-list { display: flex; flex-direction: column; gap: 9px; }
+.cl-core-list div { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+.cl-core-list span { color: #425f56; font-size: 13px; }
+.cl-core-list b { min-width: 34px; padding: 5px; border-radius: 7px; color: #0b634f; background: #cfeee4; text-align: center; font-size: 13px; }
+.cl-proficiency-card, .cl-romance-card { padding: 14px; border-radius: 12px; background: #eef1e9; }
+.cl-proficiency-card > *, .cl-romance-card > * { display: block; }
+.cl-proficiency-card small, .cl-romance-card small { color: #71867e; font-size: 11px; }
+.cl-proficiency-card strong, .cl-romance-card strong { margin: 6px 0; font-size: 15px; }
+.cl-proficiency-card span, .cl-romance-card span { color: #587067; font-size: 11px; line-height: 1.5; }
+.cl-qualification-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.cl-qualification-list span { padding: 6px 8px; border-radius: 7px; color: #0d735e; background: #dff1e9; font-size: 10px; font-weight: 800; }
+.cl-relationships--v06 article { display: block; }
+.cl-relationships--v06 article > div { display: flex; justify-content: space-between; gap: 8px; }
+.cl-relationships--v06 article dl { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 0; }
+.cl-relationships--v06 article dl span { padding: 4px 6px; border-radius: 6px; color: #4d675e; background: rgba(25,52,47,.06); font-size: 10px; }
+.cl-assignment-stage h2, .cl-preference-stage h2 { margin: 0; font-size: clamp(36px, 5vw, 58px); line-height: 1.08; letter-spacing: -.055em; }
+.cl-assignment-lead { max-width: 620px; margin: 20px 0; color: #526c63; font-size: 17px; line-height: 1.8; }
+.cl-assignment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 24px 0; }
+.cl-assignment-grid div { padding: 15px; border: 1px solid rgba(25,52,47,.1); border-radius: 12px; background: #f8f6ef; }
+.cl-assignment-grid small, .cl-assignment-grid strong { display: block; }
+.cl-assignment-grid small { margin-bottom: 7px; color: #71867e; font-size: 11px; }
+.cl-assignment-grid strong { font-size: 14px; line-height: 1.4; }
+.cl-assignment-stage blockquote { margin: 18px 0 0; padding: 17px; border-left: 3px solid #28ad91; color: #405c53; background: #e8f1eb; font-size: 14px; line-height: 1.65; }
+.cl-check-result { margin: 20px 0; padding: 16px; border-radius: 13px; text-align: left; }
+.cl-check-result.success { background: #dff1e9; }
+.cl-check-result.failure { background: #f5e6de; }
+.cl-check-result header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.cl-check-result header strong { font-size: 15px; }
+.cl-check-result header span { color: #647a72; font: 800 12px ui-monospace, monospace; }
+.cl-check-result > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.cl-check-result > div span { padding: 6px 8px; border-radius: 7px; background: rgba(255,255,255,.55); font-size: 11px; }
+.cl-report-badge { padding: 8px 10px; border-radius: 8px; color: #0d735e; background: #dff1e9; font-size: 12px; font-weight: 850; }
+.cl-report--v06 .cl-year-story > div { padding-top: 9px; border-top: 1px solid rgba(25,52,47,.09); }
+.cl-hospital-decision { margin-top: 14px; padding: 16px; border-radius: 12px; color: #edf8f4; background: #183c35; }
+.cl-hospital-decision > * { display: block; }
+.cl-hospital-decision small { color: #9fc2b8; font-size: 11px; }
+.cl-hospital-decision strong { margin-top: 7px; font-size: 14px; line-height: 1.55; }
+.cl-chapter .cl-metric { min-width: 0; }
+.cl-chapter .cl-metric strong { overflow-wrap: anywhere; font-size: 18px; }
+
+@media (max-width: 720px) {
+  .cl-assignment-grid { grid-template-columns: 1fr; }
+  .cl-assignment-stage h2, .cl-preference-stage h2 { font-size: 37px; }
+  .cl-check-result header { align-items: flex-start; flex-direction: column; }
+  .cl-relationship-setting button { min-height: 54px; }
+}
