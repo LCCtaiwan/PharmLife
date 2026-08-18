@@ -1,48 +1,71 @@
 import { useEffect, useState } from 'react'
-import { dumpTimeline, fastForward, parseDebugSearch, simulate } from './career-layer/debug'
-import { abilityGrade, choiceById, chooseCareerDirection, continueAfterReport, createCareerGame, currentLevel, finalizeCareerYear, resolveWorkplaceEvent, workplaceEventById } from './career-layer/engine'
-import { HOSPITAL_CAREER } from './career-layer/hospital'
-import { HOSPITAL_COLLEAGUES, HOSPITAL_EVENTS, HOSPITAL_GOALS, SEED_FATE_LABELS, selectTenYearEnding } from './career-layer/hospital-story'
+import { chooseV06Episode, chooseV06Preference, continueAfterV06Outcome, continueAfterV06Report, createHospitalV06Game, fastForwardV06, preferenceById, proficiencyLabel, romanceStageLabel, simulateV06, startV06Assignment, v06EpisodeById } from './career-layer/engine-v06'
+import { V06_ASSIGNMENTS, V06_PEOPLE } from './career-layer/hospital-v06'
 import { generateCareerSeed, normalizeCareerSeed } from './career-layer/rng'
-import type { AbilityKey, AnnualReport, GameState, SimulationConfig } from './career-layer/types'
+import { CORE_COMPETENCY_KEYS, type CoreCompetencyKey, type HospitalV06State, type RomancePreference, type V06AnnualReport } from './career-layer/v06-types'
 import './career-layer/app.css'
 
 declare global {
   interface Window {
     pharmLifeDebug?: {
-      fastForward: (years: number) => GameState
-      simulate: (config?: SimulationConfig) => ReturnType<typeof simulate>
-      dumpTimeline: () => ReturnType<typeof dumpTimeline>
-      getState: () => GameState
+      fastForward: (years: number) => HospitalV06State
+      simulate: (runs?: number) => ReturnType<typeof simulateV06>
+      dumpTimeline: () => HospitalV06State['timeline']
+      getState: () => HospitalV06State
     }
   }
 }
 
-const ABILITY_LABELS: Record<AbilityKey, string> = {
-  KNOW: '專業', DISP: '實務', COMM: '溝通', EFF: '效率', REG: '法規', MGT: '管理', BIZ: '商業', RES: '研究',
+const CORE_LABELS: Record<CoreCompetencyKey, string> = {
+  dispensing_verification: '調劑與核對',
+  prescription_judgment: '處方判讀',
+  drug_knowledge: '藥品知識',
+  communication: '溝通協調',
+  situational_response: '現場應變',
+  medication_safety: '藥事安全',
+}
+
+const QUALIFICATION_LABELS: Record<string, string> = {
+  pgy_enrolled: 'PGY 培育中',
+  outpatient_supervised: '門診受監督作業',
+  outpatient_independent: '門診獨立作業',
+  inpatient_supervised: '住院受監督作業',
+  inpatient_independent: '住院獨立作業',
+  emergency_observer: '急診夜間見習',
+  emergency_supervised: '急診受監督作業',
+  emergency_independent: '急診獨立作業',
+  drug_supply_supervised: '藥品管理受監督作業',
+  drug_supply_independent: '藥品管理獨立作業',
 }
 
 function initialBoot() {
-  const debug = parseDebugSearch(window.location.search)
-  const game = createCareerGame(HOSPITAL_CAREER, { ...debug, seed: debug.seed ?? generateCareerSeed() }, HOSPITAL_GOALS)
-  return { game, started: Boolean(debug.debug) }
+  const params = new URLSearchParams(window.location.search)
+  const debug = params.get('debug') === '1'
+  const relationshipPreference: RomancePreference = params.get('romance') === 'off' ? 'friends_only' : 'open'
+  const seed = params.get('seed') ?? generateCareerSeed()
+  return {
+    game: createHospitalV06Game({ seed, relationshipPreference, debug }),
+    started: debug,
+    relationshipPreference,
+  }
 }
 
 export default function App() {
   const [boot] = useState(initialBoot)
-  const [game, setGame] = useState<GameState>(boot.game)
+  const [game, setGame] = useState(boot.game)
   const [started, setStarted] = useState(boot.started)
   const [seedDraft, setSeedDraft] = useState(boot.game.seed)
+  const [relationshipPreference, setRelationshipPreference] = useState<RomancePreference>(boot.relationshipPreference)
 
   useEffect(() => {
     window.pharmLifeDebug = {
       fastForward: (years) => {
-        const result = fastForward(game, years, 'balanced', HOSPITAL_CAREER)
+        const result = fastForwardV06(game, years)
         setGame(result)
         return result
       },
-      simulate: (config) => simulate(config, HOSPITAL_CAREER),
-      dumpTimeline: () => dumpTimeline(game),
+      simulate: (runs) => simulateV06(runs, game.seed),
+      dumpTimeline: () => game.timeline.map((entry) => ({ ...entry })),
       getState: () => game,
     }
     return () => { delete window.pharmLifeDebug }
@@ -51,255 +74,252 @@ export default function App() {
   const start = () => {
     const seed = normalizeCareerSeed(seedDraft)
     setSeedDraft(seed)
-    setGame(createCareerGame(HOSPITAL_CAREER, { seed }, HOSPITAL_GOALS))
+    setGame(createHospitalV06Game({ seed, relationshipPreference }))
     setStarted(true)
     window.scrollTo(0, 0)
   }
+
   const reset = () => {
     if (game.debug) {
-      setGame(createCareerGame(HOSPITAL_CAREER, parseDebugSearch(window.location.search), HOSPITAL_GOALS))
+      const params = new URLSearchParams(window.location.search)
+      setGame(createHospitalV06Game({ seed: params.get('seed') ?? game.seed, relationshipPreference, debug: true }))
       return
     }
-    setSeedDraft(game.seed)
     setStarted(false)
     window.scrollTo(0, 0)
   }
-  const role = currentLevel(game, HOSPITAL_CAREER)
-  const displayAge = game.stage === 'report' && game.lastReport ? game.lastReport.age : game.age
-  const displayYear = game.stage === 'report' && game.lastReport ? game.lastReport.year : game.year
-  const displayRunYear = game.stage === 'report' && game.lastReport ? game.lastReport.age - 24 : Math.min(game.runYear, 10)
 
   if (!started) return <StartScreen
     seed={seedDraft}
+    relationshipPreference={relationshipPreference}
     onSeedChange={setSeedDraft}
     onRandomize={() => setSeedDraft(generateCareerSeed())}
+    onRelationshipChange={setRelationshipPreference}
     onStart={start}
   />
 
+  const assignment = V06_ASSIGNMENTS[game.assignmentId]
+  const displayAge = game.stage === 'report' && game.lastReport ? game.lastReport.age : game.age
+  const displayYear = game.stage === 'report' && game.lastReport ? game.lastReport.year : game.year
+  const displayCareerYear = game.stage === 'report' && game.lastReport ? game.lastReport.careerYear : Math.min(game.careerYear, 5)
+
   return <main className="cl-shell">
     <header className="cl-header">
-      <div className="cl-brand">
-        <span>Rx</span>
-        <div><strong>PharmLife</strong><small>HOSPITAL STORY v0.5</small></div>
-      </div>
-      <div className="cl-meta">
-        {game.debug && <b>DEBUG</b>}
-        <button type="button" onClick={reset}>重新開始</button>
-      </div>
+      <div className="cl-brand"><span>Rx</span><div><strong>PharmLife</strong><small>HOSPITAL CAREER v0.6</small></div></div>
+      <div className="cl-meta">{game.debug && <b>DEBUG</b>}<button type="button" onClick={reset}>重新開始</button></div>
     </header>
 
-    <section className="cl-hero">
+    <section className="cl-hero cl-hero--v06">
       <div>
-        <div className="cl-hero-kicker">
-          <p className="cl-eyebrow">第 {displayRunYear} 年 · {displayYear} · {displayAge} 歲</p>
-          <code>SEED · {game.seed}</code>
-        </div>
-        <h1>{role.title}</h1>
-        <p>{HOSPITAL_CAREER.description}</p>
+        <div className="cl-hero-kicker"><p className="cl-eyebrow">新人期第 {displayCareerYear} 年 · {displayYear} · {displayAge} 歲</p><code>SEED · {game.seed}</code></div>
+        <h1>{assignment.name}</h1>
+        <p>{assignment.description}</p>
       </div>
       <div className="cl-vitals" aria-label="目前狀態">
-        <Metric label="職級" value={`Lv.${game.level}`} />
-        <Metric label="壓力" value={Math.round(game.stress)} suffix="/100" tone={game.stress >= 70 ? 'danger' : undefined} />
-        <Metric label="健康" value={Math.round(game.health)} suffix="/100" />
+        <Metric label="疲勞" value={Math.round(game.condition.fatigue)} suffix="/100" tone={game.condition.fatigue >= 70 ? 'danger' : undefined} />
+        <Metric label="壓力" value={Math.round(game.condition.stress)} suffix="/100" tone={game.condition.stress >= 70 ? 'danger' : undefined} />
+        <Metric label="健康" value={Math.round(game.condition.health)} suffix="/100" />
         <Metric label="資產" value={Math.round(game.money)} suffix="萬" />
       </div>
     </section>
 
     <div className="cl-layout">
-      <aside className="cl-panel cl-sidebar">
-        <h2>能力評級</h2>
-        <div className="cl-abilities">
-          {(Object.keys(ABILITY_LABELS) as AbilityKey[]).map((key) => <div key={key}>
-            <span>{ABILITY_LABELS[key]} <small>{key}</small></span>
-            <b>{abilityGrade(game.abilities[key])}</b>
-          </div>)}
-        </div>
-        <hr />
-        <dl className="cl-mini-stats">
-          <div><dt>年資</dt><dd>{game.yearsInCareer} 年</dd></div>
-          <div><dt>本階年資</dt><dd>{game.yearsInLevel} 年</dd></div>
-          <div><dt>處方攔截</dt><dd>{Math.round(game.signatureValue)} 件</dd></div>
-          <div><dt>Burnout Risk</dt><dd>{Math.round(game.burnout.risk)}</dd></div>
-        </dl>
-        {game.fateRevealed && !game.fateRevealedThisYear && <div className="cl-fate"><small>SEED 命運已揭露</small><strong>{SEED_FATE_LABELS[game.seedFate].label}</strong><p>{SEED_FATE_LABELS[game.seedFate].reveal}</p></div>}
-      </aside>
-
+      <CoreSidebar game={game} />
       <section className="cl-panel cl-stage" aria-live="polite">
-        {game.stage === 'choice' && <ChoiceStage game={game} onChoose={(id) => setGame((state) => chooseCareerDirection(state, id, HOSPITAL_CAREER, HOSPITAL_GOALS, HOSPITAL_EVENTS))} />}
-        {game.stage === 'event' && <EventStage game={game} onChoose={(id) => setGame((state) => resolveWorkplaceEvent(state, id, HOSPITAL_EVENTS))} />}
-        {game.stage === 'outcome' && <OutcomeStage game={game} onContinue={() => setGame((state) => finalizeCareerYear(state, HOSPITAL_CAREER, HOSPITAL_GOALS, HOSPITAL_EVENTS))} />}
-        {game.stage === 'report' && game.lastReport && <ReportCard report={game.lastReport} onContinue={() => setGame((state) => continueAfterReport(state, HOSPITAL_CAREER, HOSPITAL_GOALS))} />}
-        {game.stage === 'ending' && <EndingCard game={game} onRestart={reset} />}
+        {game.stage === 'assignment' && <AssignmentStage game={game} onContinue={() => setGame(startV06Assignment)} />}
+        {(game.stage === 'episode' || game.stage === 'life') && <EpisodeStage game={game} onChoose={(id) => setGame((state) => chooseV06Episode(state, id))} />}
+        {game.stage === 'outcome' && <OutcomeStage game={game} onContinue={() => setGame(continueAfterV06Outcome)} />}
+        {game.stage === 'preference' && <PreferenceStage game={game} onChoose={(id) => setGame((state) => chooseV06Preference(state, id))} />}
+        {game.stage === 'report' && game.lastReport && <ReportCard report={game.lastReport} finalYear={game.careerYear > 5} onContinue={() => setGame(continueAfterV06Report)} />}
+        {game.stage === 'chapter' && <ChapterCard game={game} onRestart={reset} />}
       </section>
-
-      <aside className="cl-panel cl-sidebar">
-        <h2>職場關係</h2>
-        <div className="cl-relationships">
-          {HOSPITAL_COLLEAGUES.map((person) => <article key={person.id}>
-            <div><strong>{person.name}</strong><small>{person.role}</small></div>
-            <span>信任 {game.colleagues[person.id]?.trust ?? 0}</span>
-          </article>)}
-        </div>
-        <h2 className="cl-sidebar-subtitle">今年位置</h2>
-        <dl className="cl-mini-stats">
-          <div><dt>月本薪</dt><dd>{role.salaryBase.toFixed(1)} 萬</dd></div>
-          <div><dt>年薪月數</dt><dd>14.5 個月</dd></div>
-          <div><dt>進階津貼</dt><dd>{game.compensation.ladderAllowance.toFixed(2)} 萬/月</dd></div>
-          <div><dt>上年收入</dt><dd>{game.reports.length ? `${game.compensation.annualIncome} 萬` : '尚未結算'}</dd></div>
-        </dl>
-        <div className="cl-next-level">
-          <small>下一階</small>
-          {role.isCeiling
-            ? <strong>已到組織天花板</strong>
-            : <><strong>{HOSPITAL_CAREER.ladder[game.level]?.title}</strong><span>至少 {role.minYears} 年 · 績效 {role.perfRequired}</span></>}
-        </div>
-        <p className="cl-disclaimer">薪資數值參考公開資訊並經遊戲化調整，非職涯建議。</p>
-      </aside>
+      <RelationshipSidebar game={game} />
     </div>
   </main>
 }
 
-function StartScreen({ seed, onSeedChange, onRandomize, onStart }: { seed: string; onSeedChange: (seed: string) => void; onRandomize: () => void; onStart: () => void }) {
+function StartScreen({ seed, relationshipPreference, onSeedChange, onRandomize, onRelationshipChange, onStart }: {
+  seed: string
+  relationshipPreference: RomancePreference
+  onSeedChange: (seed: string) => void
+  onRandomize: () => void
+  onRelationshipChange: (value: RomancePreference) => void
+  onStart: () => void
+}) {
   return <main className="cl-start">
     <div className="cl-start-glow" />
     <section className="cl-start-card">
       <div className="cl-start-brand"><span>Rx</span><strong>PharmLife</strong></div>
-      <p className="cl-start-version">HOSPITAL STORY · v0.5</p>
-      <h1>藥師人生<br />沒有標準處方。</h1>
-      <p className="cl-start-lead">從 25 歲醫院藥師開始。十年裡，你會遇見記得選擇的人、無法預測的職場事件，以及不只寫在薪資上的代價。</p>
+      <p className="cl-start-version">HOSPITAL CAREER · v0.6</p>
+      <h1>第一天，<br />醫院先替你排好了。</h1>
+      <p className="cl-start-lead">從 25 歲新進藥師開始。工作由醫院分派；你決定如何處理案件、接受培育，以及要和哪些人一起走下去。</p>
 
-      <div className="cl-start-career">
-        <div><small>起始職涯</small><strong>醫院藥師</strong></div>
-        <span>25 歲 · 新人藥師</span>
-      </div>
+      <div className="cl-start-career"><div><small>第一個開發章節</small><strong>醫院藥師新人期</strong></div><span>25–29 歲 · PGY／輪調</span></div>
+
+      <fieldset className="cl-relationship-setting">
+        <legend>感情事件</legend>
+        <div>
+          <button className={relationshipPreference === 'open' ? 'active' : ''} type="button" onClick={() => onRelationshipChange('open')}>開放發展</button>
+          <button className={relationshipPreference === 'friends_only' ? 'active' : ''} type="button" onClick={() => onRelationshipChange('friends_only')}>只維持朋友</button>
+        </div>
+        <small>兩種設定都能完整遊玩；單身不會受到懲罰。</small>
+      </fieldset>
 
       <label className="cl-seed-field">
         <span>世界種子</span>
         <div><input aria-label="世界種子" value={seed} maxLength={24} onChange={(event) => onSeedChange(event.target.value.toUpperCase())} /><button type="button" onClick={onRandomize}>換一個</button></div>
-        <small>相同 Seed＋相同選擇＝相同人生。可以直接輸入朋友的 Seed 互相挑戰。</small>
+        <small>相同 Seed＋相同選擇＝相同分派與結果。</small>
       </label>
 
-      <button className="cl-start-button" type="button" onClick={onStart}><span>開始職涯</span><b>25 歲 · 醫院藥師　→</b></button>
-      <p className="cl-start-note">薪資數值參考公開資訊並經遊戲化調整，非職涯建議。</p>
+      <button className="cl-start-button" type="button" onClick={onStart}><span>開始新人期</span><b>25 歲 · 門診調劑　→</b></button>
+      <p className="cl-start-note">目前實作 25–29 歲新人／PGY；30 歲是開發檢查點，不是職涯結局。</p>
     </section>
   </main>
 }
 
-function Metric({ label, value, suffix, tone }: { label: string; value: string | number; suffix?: string; tone?: 'danger' }) {
-  return <div className={tone ? `cl-metric cl-metric--${tone}` : 'cl-metric'}><span>{label}</span><strong>{value}<small>{suffix}</small></strong></div>
+function CoreSidebar({ game }: { game: HospitalV06State }) {
+  return <aside className="cl-panel cl-sidebar">
+    <h2>基礎能力</h2>
+    <div className="cl-core-list">
+      {CORE_COMPETENCY_KEYS.map((key) => <div key={key}><span>{CORE_LABELS[key]}</span><b>{game.competencies[key]}</b></div>)}
+    </div>
+    <hr />
+    <h2>本單位培育</h2>
+    <div className="cl-proficiency-card"><small>{V06_ASSIGNMENTS[game.assignmentId].name}</small><strong>{proficiencyLabel(game.assignmentExperience[game.assignmentId])}</strong><span>累積經驗 {game.assignmentExperience[game.assignmentId]}</span></div>
+    <div className="cl-qualification-list">
+      {game.qualifications.filter((id) => !id.startsWith('pgy_year_')).slice(-4).map((id) => <span key={id}>{QUALIFICATION_LABELS[id] ?? id}</span>)}
+    </div>
+  </aside>
 }
 
-function ChoiceStage({ game, onChoose }: { game: GameState; onChoose: (id: string) => void }) {
-  const goal = HOSPITAL_GOALS.find((item) => item.id === game.currentGoalId)
-  return <div className="cl-choice-stage">
-    <p className="cl-eyebrow">第 {game.runYear} 年 · 年度目標</p>
-    <div className="cl-goal-card"><small>今年要守住的事</small><strong>{goal?.label}</strong><p>{goal?.description}</p></div>
-    <h2>今年，你要拿什麼換什麼？</h2>
-    <p className="cl-intro">先選工作方向。真正的職場事件，會在計畫之外發生。</p>
-    <div className="cl-choice-list">
-      {game.availableChoiceIds.map((id, index) => {
-        const choice = choiceById(HOSPITAL_CAREER, id)!
-        return <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}>
-          <i>{String(index + 1).padStart(2, '0')}</i>
-          <span><strong>{choice.label}</strong></span>
-          <b>→</b>
-        </button>
+function RelationshipSidebar({ game }: { game: HospitalV06State }) {
+  const romance = game.romanceStates.zhou_yian
+  return <aside className="cl-panel cl-sidebar">
+    <h2>職場人際</h2>
+    <div className="cl-relationships cl-relationships--v06">
+      {Object.entries(game.colleagues).map(([id, relation]) => {
+        const person = V06_PEOPLE[id as keyof typeof V06_PEOPLE]
+        if (!person) return null
+        return <article key={id}>
+          <div><strong>{person.name}</strong><small>{relation.currentRole}</small></div>
+          <dl><span>專業 {relation.professionalTrust}</span><span>親近 {relation.personalCloseness}</span><span>摩擦 {relation.friction}</span></dl>
+        </article>
       })}
     </div>
-  </div>
+    <h2 className="cl-sidebar-subtitle">生活關係</h2>
+    <div className="cl-romance-card"><small>{game.relationshipPreference === 'open' ? '感情事件開放' : '朋友／單身路線'}</small><strong>周以安 · {romanceStageLabel(romance.stage)}</strong><span>親近 {romance.closeness} · 承諾 {romance.commitment} · 衝突 {romance.conflict}</span></div>
+    <p className="cl-disclaimer">專業信任不等於私人親近；有伴侶也不等於比較成功。</p>
+  </aside>
 }
 
-function EventStage({ game, onChoose }: { game: GameState; onChoose: (id: string) => void }) {
-  const event = workplaceEventById(HOSPITAL_EVENTS, game.pendingEventId)
-  if (!event) return null
-  const speaker = HOSPITAL_COLLEAGUES.find((person) => person.id === event.speakerId)
+function AssignmentStage({ game, onContinue }: { game: HospitalV06State; onContinue: () => void }) {
+  const assignment = V06_ASSIGNMENTS[game.assignmentId]
+  return <article className="cl-assignment-stage">
+    <p className="cl-eyebrow">年度分派 · 由醫院安排</p>
+    <h2>{assignment.name}</h2>
+    <p className="cl-assignment-lead">{assignment.description}</p>
+    <div className="cl-assignment-grid">
+      <div><small>班別</small><strong>{assignment.roster}</strong></div>
+      <div><small>目前資格</small><strong>{proficiencyLabel(game.assignmentExperience[game.assignmentId])}</strong></div>
+      <div><small>今年工作片段</small><strong>{game.episodeQueue.length} 個</strong></div>
+    </div>
+    <blockquote>必要工作不是玩家購買的行動。你的選擇，會發生在真正需要判斷的時刻。</blockquote>
+    <button className="cl-primary" type="button" onClick={onContinue}>進入第一個工作片段 <span>→</span></button>
+  </article>
+}
+
+function EpisodeStage({ game, onChoose }: { game: HospitalV06State; onChoose: (id: string) => void }) {
+  const episode = v06EpisodeById(game.pendingEpisodeId)
+  if (!episode) return null
+  const speaker = episode.speakerId ? V06_PEOPLE[episode.speakerId as keyof typeof V06_PEOPLE] : undefined
   return <article className="cl-event-stage">
-    <p className="cl-eyebrow">年中 · 職場事件</p>
+    <p className="cl-eyebrow">{episode.kind === 'work' ? `工作片段 ${game.episodeIndex + 1}/${game.episodeQueue.length}` : '下班之後 · 自願人生線'}</p>
     {speaker && <div className="cl-speaker"><span>{speaker.name.slice(0, 1)}</span><div><strong>{speaker.name}</strong><small>{speaker.role}</small></div></div>}
-    <h2>{event.title}</h2>
-    <p className="cl-event-scene">{event.scene}</p>
+    <h2>{episode.title}</h2>
+    <p className="cl-event-scene">{episode.scene}</p>
     <div className="cl-event-choices">
-      {event.choices.map((choice) => <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}><strong>{choice.label}</strong><b>→</b></button>)}
+      {episode.choices.map((choice) => <button type="button" key={choice.id} onClick={() => onChoose(choice.id)}><strong>{choice.label}</strong><b>→</b></button>)}
     </div>
   </article>
 }
 
-function OutcomeStage({ game, onContinue }: { game: GameState; onContinue: () => void }) {
+function OutcomeStage({ game, onContinue }: { game: HospitalV06State; onContinue: () => void }) {
+  const outcome = game.pendingOutcome
+  if (!outcome) return null
+  const workDone = outcome.kind === 'work' && game.episodeIndex + 1 >= game.episodeQueue.length
   return <article className="cl-outcome-stage">
-    <p className="cl-eyebrow">選擇的結果</p>
+    <p className="cl-eyebrow">選擇之後才揭露結果</p>
     <div className="cl-outcome-mark">Rx</div>
-    <h2>{game.pendingOutcomeTitle}</h2>
-    <p>{game.pendingOutcomeText}</p>
-    {game.yearDraft?.relationshipNotes.length ? <div className="cl-memory-note"><small>有人會記得這件事</small>{game.yearDraft.relationshipNotes.map((note) => <span key={note}>{colleagueNote(note)}</span>)}</div> : null}
-    {game.fateRevealedThisYear && <div className="cl-fate-reveal"><small>這個 Seed 的命運開始浮現</small><strong>{SEED_FATE_LABELS[game.seedFate].label}</strong><p>{SEED_FATE_LABELS[game.seedFate].reveal}</p></div>}
-    <button className="cl-primary" type="button" onClick={onContinue}>查看年度成績單 <span>→</span></button>
+    <h2>{outcome.title}</h2>
+    <p>{outcome.text}</p>
+    {outcome.check && <div className={outcome.check.passed ? 'cl-check-result success' : 'cl-check-result failure'}>
+      <header><strong>{outcome.check.passed ? '處理成立' : '需要支援完成'}</strong><span>{outcome.check.score} / 難度 {outcome.check.difficulty}</span></header>
+      <div>{outcome.check.factors.map((factor) => <span key={factor}>{factor}</span>)}</div>
+    </div>}
+    {outcome.relationshipNotes.length > 0 && <div className="cl-memory-note"><small>關係留下了記憶</small>{outcome.relationshipNotes.map((note) => <span key={note}>{note}</span>)}</div>}
+    <button className="cl-primary" type="button" onClick={onContinue}>{outcome.kind === 'life' ? '填寫下一年度志願' : workDone ? '結束今天的工作' : '進入下一個工作片段'} <span>→</span></button>
   </article>
 }
 
-function colleagueNote(note: string): string {
-  return HOSPITAL_COLLEAGUES.reduce((text, person) => text.replace(person.id, person.name), note)
+function PreferenceStage({ game, onChoose }: { game: HospitalV06State; onChoose: (id: string) => void }) {
+  return <article className="cl-preference-stage">
+    <p className="cl-eyebrow">年度培育志願</p>
+    <h2>你可以提出志願，<br />但醫院不一定核准。</h2>
+    <p className="cl-intro">院方會依資格、缺額、人力與 Seed 決定下年度分派。</p>
+    <div className="cl-choice-list">
+      {game.availablePreferenceIds.map((id, index) => {
+        const preference = preferenceById(id)!
+        return <button type="button" key={id} onClick={() => onChoose(id)}><i>{String(index + 1).padStart(2, '0')}</i><span><strong>{preference.label}</strong></span><b>→</b></button>
+      })}
+    </div>
+  </article>
 }
 
-function ReportCard({ report, onContinue }: { report: AnnualReport; onContinue: () => void }) {
-  return <article className="cl-report">
-    <header>
-      <div><p className="cl-eyebrow">{report.age} 歲 · 年度成績單</p><h2>{report.title}</h2></div>
-      <div className="cl-performance"><span>PERFORMANCE</span><strong>{report.performance}</strong></div>
-    </header>
+function ReportCard({ report, finalYear, onContinue }: { report: V06AnnualReport; finalYear: boolean; onContinue: () => void }) {
+  return <article className="cl-report cl-report--v06">
+    <header><div><p className="cl-eyebrow">{report.age} 歲 · 新人期第 {report.careerYear} 年</p><h2>{report.assignmentName}</h2></div><div className="cl-report-badge">年度報告</div></header>
     <div className="cl-report-grid">
-      <section>
-        <h3>收入與資產</h3>
-        <dl>
-          <div><dt>月本薪</dt><dd>{report.compensation.salaryBase.toFixed(1)} 萬</dd></div>
-          <div><dt>月津貼</dt><dd>+{(report.compensation.nightShiftAllowance + report.compensation.ladderAllowance + report.compensation.dutyAllowance).toFixed(2)} 萬</dd></div>
-          <div><dt>年薪月數</dt><dd>× {report.compensation.monthsPerYear}</dd></div>
-          <div className="cl-total"><dt>年收入</dt><dd>{report.compensation.annualIncome} 萬</dd></div>
-          <div><dt>總資產</dt><dd>{Math.round(report.moneyBefore)} → {Math.round(report.moneyAfter)} 萬</dd></div>
-        </dl>
-      </section>
-      <section>
-        <h3>能力與代價</h3>
-        <dl>
-          {report.abilityChanges.length > 0
-            ? report.abilityChanges.map((change) => <div key={change.key}><dt>{ABILITY_LABELS[change.key]}</dt><dd>{abilityGrade(change.before)} → {abilityGrade(change.after)}</dd></div>)
-            : <div><dt>能力</dt><dd>本年持平</dd></div>}
-          <div><dt>Stress</dt><dd>{Math.round(report.stressBefore)} → {Math.round(report.stressAfter)}</dd></div>
-          <div><dt>Burnout Risk</dt><dd>{Math.round(report.burnoutRiskBefore)} → {Math.round(report.burnoutRiskAfter)}</dd></div>
-          <div><dt>處方疑義攔截</dt><dd>+{report.signatureGrowth} 件</dd></div>
-        </dl>
-      </section>
+      <section><h3>工作與培育</h3><dl>
+        <div><dt>班別</dt><dd>{report.roster}</dd></div>
+        <div><dt>熟練階段</dt><dd>{proficiencyLabel(report.proficiencyBefore)} → {proficiencyLabel(report.proficiencyAfter)}</dd></div>
+        <div><dt>取得資格</dt><dd>{report.qualificationsEarned.map((id) => QUALIFICATION_LABELS[id] ?? (id.startsWith('pgy_year_') ? `PGY 第 ${id.match(/\d+/)?.[0]} 年完成` : id)).join('、')}</dd></div>
+        <div className="cl-total"><dt>年收入</dt><dd>{report.annualIncome} 萬</dd></div>
+        <div><dt>資產</dt><dd>{Math.round(report.assetsBefore)} → {Math.round(report.assetsAfter)} 萬</dd></div>
+      </dl></section>
+      <section><h3>能力與狀態</h3><dl>
+        {Object.entries(report.competencyChanges).map(([key, delta]) => <div key={key}><dt>{CORE_LABELS[key as CoreCompetencyKey]}</dt><dd>+{delta}</dd></div>)}
+        <div><dt>疲勞</dt><dd>{Math.round(report.conditionBefore.fatigue)} → {Math.round(report.conditionAfter.fatigue)}</dd></div>
+        <div><dt>壓力</dt><dd>{Math.round(report.conditionBefore.stress)} → {Math.round(report.conditionAfter.stress)}</dd></div>
+        <div><dt>Burnout Risk</dt><dd>{Math.round(report.conditionBefore.burnoutRisk)} → {Math.round(report.conditionAfter.burnoutRisk)}</dd></div>
+      </dl></section>
     </div>
-    <section className={report.goalCompleted ? 'cl-goal-result success' : 'cl-goal-result failure'}>
-      <small>年度目標 · {report.goalLabel}</small><strong>{report.goalCompleted ? '達成' : '未達成'}</strong>
-    </section>
-    <section className="cl-year-story">
-      <strong>今年：{report.choiceLabel}</strong>
-      <p className="cl-report-event">事件：{report.eventTitle} · {report.eventChoiceLabel}</p>
-      <p>{report.eventOutcome}</p>
-      <p>{report.notes.map(colleagueNote).join(' ')}</p>
-      <blockquote>{report.promotionMessage}</blockquote>
-    </section>
-    <button className="cl-primary" type="button" onClick={onContinue}>進入下一年 <span>→</span></button>
+    <section className="cl-year-story"><strong>今年留下的案件</strong>{report.episodeResults.map((result) => <div key={`${result.episodeId}-${result.choiceLabel}`}><p className="cl-report-event">{result.title} · {result.choiceLabel}</p><p>{result.outcome}</p></div>)}</section>
+    <section className="cl-hospital-decision"><small>你的志願 · {report.preferenceLabel}</small><strong>{report.preferenceDecision}</strong></section>
+    <button className="cl-primary" type="button" onClick={onContinue}>{finalYear ? '查看新人期小結' : '查看下一年度分派'} <span>→</span></button>
   </article>
 }
 
-function EndingCard({ game, onRestart }: { game: GameState; onRestart: () => void }) {
-  const ending = selectTenYearEnding(game)
-  const promotions = game.timeline.filter((entry) => entry.type === 'promotion').length
-  return <article className="cl-ending">
-    <p className="cl-eyebrow">35 歲 · TEN-YEAR ENDING</p>
-    <h2>{ending.title}</h2>
-    <p>{ending.description}</p>
+function ChapterCard({ game, onRestart }: { game: HospitalV06State; onRestart: () => void }) {
+  const strongest = CORE_COMPETENCY_KEYS.reduce((best, key) => game.competencies[key] > game.competencies[best] ? key : best)
+  const closest = Object.entries(game.colleagues).sort(([, first], [, second]) => second.personalCloseness - first.personalCloseness)[0]
+  const romance = game.romanceStates.zhou_yian
+  return <article className="cl-ending cl-chapter">
+    <p className="cl-eyebrow">30 歲 · NEWCOMER CHAPTER REVIEW</p>
+    <h2>你不再是第一天的新人。</h2>
+    <p>這是 25–29 歲新人／PGY 的開發檢查點，不是退休，也不是完整職涯結局。你的狀態可以繼續延伸到 65 歲。</p>
     <div className="cl-ending-stats">
-      <Metric label="最高職級" value={`Lv.${game.promotion.highestLevel}`} />
-      <Metric label="退休資產" value={Math.round(game.money - game.debt)} suffix="萬" />
-      <Metric label="升遷次數" value={promotions} />
-      <Metric label="Burnout" value={game.burnout.episodes} suffix="次" tone={game.burnout.episodes ? 'danger' : undefined} />
-      <Metric label="健康" value={Math.round(game.health)} suffix="/100" />
-      <Metric label="處方攔截" value={Math.round(game.signatureValue)} suffix="件" />
+      <Metric label="最強基礎能力" value={CORE_LABELS[strongest]} />
+      <Metric label="取得資格" value={game.qualifications.filter((id) => !id.startsWith('pgy_year_') && id !== 'pgy_enrolled').length} suffix="項" />
+      <Metric label="總資產" value={Math.round(game.money)} suffix="萬" />
+      <Metric label="健康" value={Math.round(game.condition.health)} suffix="/100" />
+      <Metric label="重要同事" value={closest ? V06_PEOPLE[closest[0] as keyof typeof V06_PEOPLE]?.name ?? '尚未形成' : '尚未形成'} />
+      <Metric label="生活關係" value={romanceStageLabel(romance.stage)} />
     </div>
-    <div className="cl-ending-reasons">{ending.reasons.map((reason) => <span key={reason}>{reason}</span>)}</div>
-    <blockquote>「我要用什麼代價，換什麼人生？」這十年先給了一個答案。</blockquote>
-    <button className="cl-primary" type="button" onClick={onRestart}>換一個選擇，再走十年</button>
+    <blockquote>職涯與感情分開計算。你如何工作，和你選擇與誰同行，都會繼續留下影響。</blockquote>
+    <button className="cl-primary" type="button" onClick={onRestart}>換一個 Seed，再走一次新人期</button>
   </article>
+}
+
+function Metric({ label, value, suffix, tone }: { label: string; value: string | number; suffix?: string; tone?: 'danger' }) {
+  return <div className={tone ? `cl-metric cl-metric--${tone}` : 'cl-metric'}><span>{label}</span><strong>{value}<small>{suffix}</small></strong></div>
 }
